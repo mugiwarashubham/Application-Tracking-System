@@ -11,6 +11,17 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/candidates', require('./routes/candidates'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 
+// Serve the built React app in production (client/dist exists after `npm run build`)
+const path = require('path');
+const fs = require('fs');
+const clientDist = path.join(__dirname, '../client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) =>
+    req.path.startsWith('/api') ? next() : res.sendFile(path.join(clientDist, 'index.html'))
+  );
+}
+
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
 // Central error handler: turns Mongoose errors into readable API responses
